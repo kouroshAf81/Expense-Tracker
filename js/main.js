@@ -117,7 +117,7 @@ const showBudget = () => {
     let sub = expenseArray.reduce((total, current) => {
         return total - current
     }, 0)
-    budget.innerText = `your Budget: ${sum + sub}$`
+    budget.innerText = `Your Budget: ${sum + sub}$`
 }
 
 

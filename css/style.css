@@ -32,7 +32,7 @@ body {
     justify-content: center;
     flex-direction: column;
     background: linear-gradient(to right, #9288F8, #b3adf5);
-    height: 25vh;
+    padding: 20px 0;
 }
 
 .container {
@@ -123,6 +123,7 @@ body {
     display: grid;
     grid-template-columns: 1fr 1fr 1fr;
     text-align: center;
+    padding: 0 15px;
 }
 
 .outcome {
@@ -183,6 +184,7 @@ body {
 .budget {
     margin-top: 20px;
     font-size: 27px;
+    padding: 10px;
 }
 
 /* scrollbar */
@@ -199,4 +201,22 @@ body {
 .outcome::-webkit-scrollbar-thumb {
     background: #3226536e;
     border-radius: 10px;
+}
+
+@media screen and (max-width: 849px) {
+    .income-expense{
+        grid-template-columns: 1fr;
+    }
+    .budget {
+        order: -1;
+    }
+}
+
+@media screen and (max-width: 398px) {
+    .outcome {
+        width: 300px;
+    }
+    .income-item, .expense-item {
+        padding:20px 3px;
+    }
 }
