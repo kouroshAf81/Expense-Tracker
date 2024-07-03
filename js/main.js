@@ -1,78 +1,97 @@
-let transactionType = document.querySelector('.transaction-type')
-let transactionTypeChoice = transactionType.querySelectorAll('p')
-let chooseTransactionType = document.querySelector('.transaction-number span')
-let addBtn = document.querySelector('.transaction button')
-let transactionCategory = document.querySelector('.transaction-category')
-let budget = document.querySelector('.budget p')
+const transactionType = document.querySelector('.transaction-type')
+const transactionTypeChoice = transactionType.querySelectorAll('p')
+const chooseTransactionType = document.querySelector('.transaction-number span')
+const addBtn = document.querySelector('.transaction button')
+const transactionCategory = document.querySelector('.transaction-category')
+const budget = document.querySelector('.budget p')
+const container = document.querySelector('.income-expense')
+
+// Create a formatter to convert numbers to USD currency format
+const USDollar = new Intl.NumberFormat('en-US', {
+    style: 'currency',
+    currency: 'USD',
+});
+
+// Load previous transactions from localStorage
+document.addEventListener('DOMContentLoaded', () => {
+    if (localStorage.getItem('data')) {
+        loadFromLocalStorage();
+    }
+    deleteItem()
+    updateBudget();
+});
 
 // Add transaction 
-
 const addTransaction = () => {
-    let titleValue = document.querySelector('.transaction-title input').value
-    let numberValue = parseInt(document.querySelector('.transaction-number input').value)
-    let container = document.querySelector('.income-expense')
-    let addIncome = container.querySelector('.income')
-    let addExpense = container.querySelector('.expense')
-    if (!Number(numberValue))
-        return alert('Enter a Number')
+    const titleValue = document.querySelector('.transaction-title input').value
+    const numberValue = document.querySelector('.transaction-number input').value
 
-    let item = document.createElement('div')
+    const targetContainer = chooseTransactionType.innerText === 'income' ?
+        container.querySelector('.income') :
+        container.querySelector('.expense');
 
-    let title = document.createElement('p')
+    if (!Number(numberValue)) return alert('Enter a Number')
+
+    createTransaction(titleValue, numberValue, targetContainer)
+
+    // Executed when the transaction is deleted
+    deleteItem()
+    // Update budget
+    updateBudget()
+    saveToLocalStorage()
+}
+
+addBtn.addEventListener('click', addTransaction)
+
+// Create new transaction elements
+const createTransaction = (titleValue, numberValue, targetContainer) => {
+    const item = document.createElement('div')
+    const title = document.createElement('p')
     title.innerText = titleValue
 
-    let number = document.createElement('p')
+    const number = document.createElement('p')
     number.classList.add('outcome-number')
 
-    let deleteBtn = document.createElement('button')
+    const deleteBtn = document.createElement('button')
     deleteBtn.innerHTML = '<i class="fa-solid fa-trash"></i>'
-    number.innerText = `${numberValue}$`
+    number.innerText = `${USDollar.format(numberValue)}`
     number.insertBefore(deleteBtn, number.firstChild)
-
     item.appendChild(title)
     item.appendChild(number)
 
+    // Determine the type of transaction 
     switch (chooseTransactionType.innerText) {
         case 'income':
             item.classList.add('income-item')
-            addIncome.insertBefore(item,addIncome.firstChild)
+            targetContainer.insertBefore(item, targetContainer.firstChild)
             break
         case 'expense':
-            let categoryOption = document.querySelector('select')
+            const categoryOption = document.querySelector('select')
             if (categoryOption.value) {
-                let span = document.createElement('span')
+                const span = document.createElement('span')
                 span.classList.add('category')
                 span.innerText = categoryOption.value
                 item.appendChild(span)
             }
             item.classList.add('expense-item')
-            addExpense.insertBefore(item,addExpense.firstChild)
+            targetContainer.insertBefore(item, targetContainer.firstChild)
             break
         default:
             return
     }
-
-    // execute when the transaction deleted
-    deleteItem()
-    // update budget
-    showBudget()
 }
 
-addBtn.addEventListener('click', addTransaction)
-
-
-
-// delete transaction 
+// Delete transaction 
 
 const deleteItem = () => {
-    let getDeleteBtn = document.querySelectorAll('.outcome-number button')
+    const getDeleteBtn = document.querySelectorAll('.outcome-number button')
     getDeleteBtn.forEach((item) => {
         item.addEventListener('click', () => {
             item.parentElement.parentElement.remove()
-            // update budget
-            showBudget()
+            // Update budget
+            updateBudget()
+            saveToLocalStorage()
         })
-
     })
 }
 
@@ -91,36 +110,41 @@ transactionTypeChoice.forEach(choice => {
     })
 })
 
-// show budget when user add or delete transaction
+// Update budget when user add or delete transactions
+const updateBudget = () => {
+    const income = document.querySelectorAll('.income .outcome-number') || false
+    const expense = document.querySelectorAll('.expense .outcome-number') || false
+    const incomeArray = []
+    const expenseArray = []
 
-const showBudget = () => {
-    let incomeArray = []
-    let expenseArray = []
-    let incomes
-    let expenses
-    if (document.querySelectorAll('.income .outcome-number')) {
-        incomes = document.querySelectorAll('.income .outcome-number')
-        incomes.forEach((item, index) => {
-            incomeArray.push(parseInt(incomes[index].innerText.split('$')[0]))
+    // Calculate total budget by summing income and subtracting expenses
+    if (income) {
+        income.forEach((item) => {
+            incomeArray.push(parseFloat(item.innerText.replace(/[^0-9.-]+/g, "")))
         })
     }
-
-    if (document.querySelectorAll('.expense .outcome-number')) {
-        expenses = document.querySelectorAll('.expense .outcome-number')
-        expenses.forEach((item, index) => {
-            expenseArray.push(parseInt(expenses[index].innerText.split('$')[0]))
+    if (expense) {
+        expense.forEach((item) => {
+            expenseArray.push(parseFloat(item.innerText.replace(/[^0-9.-]+/g, "")))
         })
     }
-    let sum = incomeArray.reduce((total, current) => {
+    const sum = incomeArray.reduce((total, current) => {
         return total + current
     }, 0)
-    let sub = expenseArray.reduce((total, current) => {
+    const sub = expenseArray.reduce((total, current) => {
         return total - current
     }, 0)
-    budget.innerText = `Your Budget: ${sum + sub}$`
+    container.querySelector('.budget').innerText = `Your Budget: ${USDollar.format(sum + sub)}`
+
+    saveToLocalStorage()
+
+    document.querySelector('.transaction-number input').value = ''
 }
 
-
-
-
-
+// save in localStorage
+const saveToLocalStorage = () => {
+    localStorage.setItem('data', container.innerHTML)
+}
+const loadFromLocalStorage = () => {
+    container.innerHTML = localStorage.getItem('data')
+}
